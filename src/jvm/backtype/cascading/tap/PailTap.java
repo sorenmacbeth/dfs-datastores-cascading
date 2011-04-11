@@ -69,7 +69,7 @@ public class PailTap extends Hfs implements FlowListener {
         private PailTapOptions _options;
 
         public PailScheme(PailTapOptions options) {
-            super(new Fields("pail_root", options.fieldName), new Fields(options.fieldName));
+            super(new Fields("pail_root", options.fieldName), Fields.ALL);
             _options = options;
         }
 
@@ -103,7 +103,7 @@ public class PailTap extends Hfs implements FlowListener {
 
         @Override
         public void sink(TupleEntry tuple, OutputCollector output) throws IOException {
-            Comparable obj = tuple.get(_options.fieldName);
+            Comparable obj = tuple.get(0);
             String key;
             //a hack since byte[] isn't natively handled by hadoop
             if(getStructure() instanceof DefaultPailStructure) {
