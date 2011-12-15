@@ -8,7 +8,6 @@
                                org.apache.hadoop/hadoop-core
                                thirdparty/jgrapht-jdk1.6
                                riffle/riffle]]
-                 
                  [thirdparty/jgrapht-jdk1.6 "0.8.1"]
                  [riffle/riffle "0.1-dev"]]
   :dev-dependencies [[org.apache.hadoop/hadoop-core "0.20.2-dev"]

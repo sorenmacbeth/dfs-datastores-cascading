@@ -6,7 +6,7 @@ import backtype.support.Utils;
 import cascading.flow.Flow;
 import cascading.flow.FlowListener;
 import cascading.scheme.Scheme;
-import cascading.tap.Hfs;
+import cascading.tap.hadoop.Hfs;
 import cascading.tap.Tap;
 import cascading.tap.TapException;
 import cascading.tuple.Fields;

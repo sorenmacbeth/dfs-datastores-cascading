@@ -4,9 +4,9 @@ import backtype.cascading.tap.PailTap.PailTapOptions;
 import backtype.hadoop.pail.Pail;
 import backtype.support.FSTestCase;
 import backtype.support.Utils;
-import cascading.flow.FlowConnector;
 import cascading.flow.FlowException;
 import cascading.flow.FlowProcess;
+import cascading.flow.hadoop.HadoopFlowConnector;
 import cascading.operation.*;
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
@@ -54,7 +54,7 @@ public class PailTapTest extends FSTestCase {
         options.fieldName = "result";
         Tap sink = new PailTap(sinkpath, options);
 
-        new FlowConnector().connect(source, sink, pipe).complete();
+        new HadoopFlowConnector().connect(source, sink, pipe).complete();
 
         Set<String> records = new HashSet<String>(getPailRecords(new Pail(fs, sinkpath)));
         assertTrue(records.contains("a1"));
@@ -96,7 +96,7 @@ public class PailTapTest extends FSTestCase {
 
         PailTap source = new PailTap(sourcePath);
         PailTap sink = new PailTap(sinkPath);
-        new FlowConnector().connect(source, sink, pipe).complete();
+        new HadoopFlowConnector().connect(source, sink, pipe).complete();
 
         assertTrue(fs.exists(new Path(sourcePath, "_temporary")));
         assertFalse(fs.exists(new Path(sinkPath, "_temporary2")));
