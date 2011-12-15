@@ -5,13 +5,15 @@ import backtype.support.CascadingUtils;
 import backtype.support.Utils;
 import cascading.flow.Flow;
 import cascading.flow.FlowListener;
+import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.scheme.Scheme;
-import cascading.tap.hadoop.Hfs;
+import cascading.scheme.SinkCall;
+import cascading.scheme.SourceCall;
 import cascading.tap.Tap;
 import cascading.tap.TapException;
+import cascading.tap.hadoop.Hfs;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
-import cascading.tuple.TupleEntry;
 import cascading.tuple.hadoop.TupleSerialization;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -20,6 +22,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.RecordReader;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -37,6 +40,14 @@ public class PailTap extends Hfs implements FlowListener {
             return PailFormatFactory.getDefaultCopy().setStructure(structure);
         } else {
             return given.setStructure(structure);
+        }
+    }
+
+    public static Pail establishPail(String root) {
+        try {
+            return new Pail(root);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -60,8 +71,13 @@ public class PailTap extends Hfs implements FlowListener {
     }
 
 
-    public class PailScheme extends Scheme {
+    public class PailScheme
+        extends Scheme<HadoopFlowProcess, JobConf, RecordReader, OutputCollector, Object[], Void> {
         private PailTapOptions _options;
+        private transient PailStructure _structure;
+
+        private transient BytesWritable bw;
+        private transient Text keyW;
 
         public PailScheme(PailTapOptions options) {
             super(new Fields("pail_root", options.fieldName), Fields.ALL);
@@ -72,47 +88,16 @@ public class PailTap extends Hfs implements FlowListener {
             return _options.spec;
         }
 
-        @Override
-        public void sourceInit(Tap tap, JobConf conf) throws IOException {
-            Pail p = new Pail(_pailRoot); //make sure it exists
-            conf.setInputFormat(p.getFormat().getInputFormatClass());
-            PailFormatFactory.setPailPathLister(conf, _options.lister);
-        }
-
-        @Override
-        public void sinkInit(Tap tap, JobConf conf) throws IOException {
-            conf.setOutputFormat(PailOutputFormat.class);
-            Utils.setObject(conf, PailOutputFormat.SPEC_ARG, getSpec());
-            Pail.create(getFileSystem(conf), _pailRoot, getSpec(), true);
-        }
-
-        @Override
-        public Tuple source(Object k, Object v) {
-            String relPath = ((Text) k).toString();
-            Comparable value = deserialize((BytesWritable) v);
-            return new Tuple(relPath, value);
-        }
-
-        private transient BytesWritable bw;
-        private transient Text keyW;
-
-        @Override
-        public void sink(TupleEntry tuple, OutputCollector output) throws IOException {
-            Comparable obj = tuple.get(0);
-            String key;
-            //a hack since byte[] isn't natively handled by hadoop
-            if (getStructure() instanceof DefaultPailStructure) {
-                key = getCategory(obj);
-            } else {
-                key = Utils.join(getStructure().getTarget(obj), "/") + getCategory(obj);
+        public PailStructure getStructure() {
+            if (_structure == null) {
+                if (getSpec() == null) {
+                    _structure = PailFormatFactory.getDefaultCopy().getStructure();
+                } else {
+                    _structure = getSpec().getStructure();
+                }
             }
-            if (bw == null) { bw = new BytesWritable(); }
-            if (keyW == null) { keyW = new Text(); }
-            serialize(obj, bw);
-            keyW.set(key);
-            output.collect(keyW, bw);
+            return _structure;
         }
-
 
         protected Comparable deserialize(BytesWritable record) {
             PailStructure structure = getStructure();
@@ -132,19 +117,77 @@ public class PailTap extends Hfs implements FlowListener {
             }
         }
 
-        private transient PailStructure _structure;
-
-        public PailStructure getStructure() {
-            if (_structure == null) {
-                if (getSpec() == null) {
-                    _structure = PailFormatFactory.getDefaultCopy().getStructure();
-                } else {
-                    _structure = getSpec().getStructure();
-                }
-            }
-            return _structure;
+        @Override
+        public void sourceConfInit(HadoopFlowProcess hadoopFlowProcess, Tap tap, JobConf conf) {
+            Pail p = PailTap.establishPail(_pailRoot); //make sure it exists
+            conf.setInputFormat(p.getFormat().getInputFormatClass());
+            PailFormatFactory.setPailPathLister(conf, _options.lister);
         }
 
+        @Override
+        public void sinkConfInit(HadoopFlowProcess hadoopFlowProcess, Tap tap, JobConf conf) {
+            conf.setOutputFormat(PailOutputFormat.class);
+            Utils.setObject(conf, PailOutputFormat.SPEC_ARG, getSpec());
+
+            try {
+                Pail.create(getFileSystem(conf), _pailRoot, getSpec(), true);
+            } catch (IOException e) {
+                throw new RuntimeException("Pail could not be created. " + e);
+            }
+        }
+
+        @Override
+        public void sourcePrepare(HadoopFlowProcess flowProcess,
+            SourceCall<Object[], RecordReader> sourceCall) {
+            sourceCall.setContext(new Object[2]);
+
+            sourceCall.getContext()[0] = sourceCall.getInput().createKey();
+            sourceCall.getContext()[1] = sourceCall.getInput().createValue();
+        }
+
+        @Override public boolean source(HadoopFlowProcess hadoopFlowProcess,
+            SourceCall<Object[], RecordReader> sourceCall) throws IOException {
+
+            Text k = (Text) sourceCall.getContext()[0];
+            BytesWritable v = (BytesWritable) sourceCall.getContext()[1];
+
+
+            boolean result = sourceCall.getInput().next(k, v);
+
+            if (!result) { return false; }
+
+            String relPath = k.toString();
+            Comparable val = deserialize(v);
+
+            sourceCall.getIncomingEntry().setTuple(new Tuple(relPath, val));
+            return true;
+        }
+
+        /** If the key and value receptables are null, initialize. */
+        private void prepKeyVal() {
+            if (bw == null) { bw = new BytesWritable(); }
+            if (keyW == null) { keyW = new Text(); }
+        }
+
+        @Override public void sink(HadoopFlowProcess hadoopFlowProcess,
+            SinkCall<Void, OutputCollector> sinkCall) throws IOException {
+
+            Comparable obj = sinkCall.getOutgoingEntry().getTuple().get(0);
+            String key;
+
+            //a hack since byte[] isn't natively handled by hadoop
+            if (getStructure() instanceof DefaultPailStructure) {
+                key = getCategory(obj);
+            } else {
+                key = Utils.join(getStructure().getTarget(obj), "/") + getCategory(obj);
+            }
+
+            prepKeyVal();
+            serialize(obj, bw);
+            keyW.set(key);
+
+            sinkCall.getOutput().collect(keyW, bw);
+        }
     }
 
     private String _pailRoot;
@@ -165,30 +208,35 @@ public class PailTap extends Hfs implements FlowListener {
         this(root, new PailTapOptions());
     }
 
-    @Override
-    public boolean deletePath(JobConf conf) throws IOException {
+    @Override public boolean deleteResource(JobConf conf) throws IOException {
         throw new UnsupportedOperationException();
     }
 
     //no good way to override this, just had to copy/paste and modify
-    @Override
-    public void sourceInit(JobConf conf) throws IOException {
-        Path root = getQualifiedPath(conf);
+    @Override public void sourceConfInit(HadoopFlowProcess process, JobConf conf) {
+        Path root = new Path(getFullIdentifier(conf));
         if (_options.attrs != null && _options.attrs.length > 0) {
-            Pail pail = new Pail(_pailRoot);
+            Pail pail = PailTap.establishPail(_pailRoot);
+
             for (List<String> attr : _options.attrs) {
                 String rel = Utils.join(attr, "/");
-                pail.getSubPail(rel); //ensure the path exists
-                Path toAdd = new Path(root, rel);
-                LOG.info("Adding input path " + toAdd.toString());
-                FileInputFormat.addInputPath(conf, toAdd);
+                try {
+                    pail.getSubPail(rel); //ensure the path exists
+                    Path toAdd = new Path(root, rel);
+                    LOG.info("Adding input path " + toAdd.toString());
+                    FileInputFormat.addInputPath(conf, toAdd);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         } else {
             FileInputFormat.addInputPath(conf, root);
         }
 
-        getScheme().sourceInit(this, conf);
-        makeLocal(conf, getQualifiedPath(conf), "forcing job to local mode, via source: ");
+        // TODO: Do we need to call super.sourceConfInit(null, conf);
+        // a la https://github.com/cwensel/cascading/blob/wip-2.0/src/hadoop/cascading/tap/hadoop/Hfs.java#L337
+        getScheme().sourceConfInit(null, this, conf);
+        makeLocal(conf, root, "forcing job to local mode, via source: ");
         TupleSerialization.setSerializations(conf);
     }
 
@@ -202,11 +250,11 @@ public class PailTap extends Hfs implements FlowListener {
     }
 
     @Override
-    public void sinkInit(JobConf conf) throws IOException {
+    public void sinkConfInit(HadoopFlowProcess process, JobConf conf) {
         if (_options.attrs != null && _options.attrs.length > 0) {
             throw new TapException("can't declare attributes in a sink");
         }
-        super.sinkInit(conf);
+        super.sinkConfInit(process, conf);
     }
 
     public void onCompleted(Flow flow) {
