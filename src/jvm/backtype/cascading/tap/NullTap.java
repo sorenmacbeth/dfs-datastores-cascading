@@ -2,17 +2,14 @@ package backtype.cascading.tap;
 
 import cascading.scheme.Scheme;
 import cascading.tap.Tap;
-import cascading.tuple.Fields;
-import cascading.tuple.Tuple;
-import cascading.tuple.TupleEntry;
-import cascading.tuple.TupleEntryCollector;
-import cascading.tuple.TupleEntryIterator;
-import java.io.IOException;
+import cascading.tuple.*;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.lib.NullOutputFormat;
+
+import java.io.IOException;
 
 
 public class NullTap extends Tap  {

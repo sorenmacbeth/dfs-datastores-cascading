@@ -14,6 +14,9 @@ autodoc
 .settings/
 .project
 .lein-failures
+.lein-deps-sum
 .DS_Store
-backtype
 *.iml
+*.ipr
+*.iws
+.idea

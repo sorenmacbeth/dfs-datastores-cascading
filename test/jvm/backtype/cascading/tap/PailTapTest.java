@@ -7,27 +7,24 @@ import backtype.support.Utils;
 import cascading.flow.FlowConnector;
 import cascading.flow.FlowException;
 import cascading.flow.FlowProcess;
-import cascading.operation.BaseOperation;
-import cascading.operation.Filter;
-import cascading.operation.FilterCall;
-import cascading.operation.Function;
-import cascading.operation.FunctionCall;
-import cascading.operation.Identity;
+import cascading.operation.*;
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
+import static backtype.support.CascadingUtils.identityFlow;
 import static backtype.support.TestUtils.*;
-import static backtype.support.CascadingUtils.*;
 
 
 public class PailTapTest extends FSTestCase {

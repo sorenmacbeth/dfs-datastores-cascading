@@ -1,16 +1,16 @@
 package backtype.cascading.tap;
 
 import cascading.scheme.Scheme;
-
 import cascading.tap.Tap;
 import cascading.tap.TapException;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
-import java.io.IOException;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.SequenceFileInputFormat;
+
+import java.io.IOException;
 
 
 public class RawSequenceFile extends Scheme

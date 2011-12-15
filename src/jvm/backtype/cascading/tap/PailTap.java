@@ -1,13 +1,6 @@
 package backtype.cascading.tap;
 
-import backtype.hadoop.pail.BinaryPailStructure;
-import backtype.hadoop.pail.DefaultPailStructure;
-import backtype.hadoop.pail.Pail;
-import backtype.hadoop.pail.PailFormatFactory;
-import backtype.hadoop.pail.PailOutputFormat;
-import backtype.hadoop.pail.PailPathLister;
-import backtype.hadoop.pail.PailSpec;
-import backtype.hadoop.pail.PailStructure;
+import backtype.hadoop.pail.*;
 import backtype.support.CascadingUtils;
 import backtype.support.Utils;
 import cascading.flow.Flow;
@@ -20,11 +13,6 @@ import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import cascading.tuple.hadoop.TupleSerialization;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
@@ -33,6 +21,12 @@ import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.log4j.Logger;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 public class PailTap extends Hfs implements FlowListener {

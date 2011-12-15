@@ -12,6 +12,7 @@ import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntryCollector;
 import org.apache.hadoop.mapred.JobConf;
+
 import static backtype.support.TestUtils.*;
 
 
