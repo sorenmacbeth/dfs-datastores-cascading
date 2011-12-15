@@ -12,7 +12,7 @@ import org.apache.hadoop.mapred.lib.NullOutputFormat;
 import java.io.IOException;
 
 
-public class NullTap extends Tap  {
+public class NullTap extends Tap {
 
     public static class NullScheme extends Scheme {
 
@@ -52,7 +52,7 @@ public class NullTap extends Tap  {
 
     @Override
     public boolean deletePath(JobConf conf) throws IOException {
-       return true;
+        return true;
     }
 
     @Override
@@ -87,8 +87,6 @@ public class NullTap extends Tap  {
 
     @Override
     public boolean equals(Object object) {
-        return this==object;
+        return this == object;
     }
-
-
 }

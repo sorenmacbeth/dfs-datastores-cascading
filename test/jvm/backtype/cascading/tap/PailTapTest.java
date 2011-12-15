@@ -36,7 +36,7 @@ public class PailTapTest extends FSTestCase {
 
         public void operate(FlowProcess fp, FunctionCall fc) {
             TupleEntry t = fc.getArguments();
-            String res = new String(Utils.getBytes((BytesWritable)t.get(0))) + "1";
+            String res = new String(Utils.getBytes((BytesWritable) t.get(0))) + "1";
             fc.getOutputCollector().add(new Tuple(new BytesWritable(res.getBytes())));
         }
 
@@ -81,7 +81,7 @@ public class PailTapTest extends FSTestCase {
                 throw new RuntimeException(e);
             }
         }
-        
+
     }
 
     public void testGarbagePathCleanup() throws Exception {
@@ -99,7 +99,7 @@ public class PailTapTest extends FSTestCase {
         new FlowConnector().connect(source, sink, pipe).complete();
 
         assertTrue(fs.exists(new Path(sourcePath, "_temporary")));
-        assertFalse(fs.exists(new Path(sinkPath, "_temporary2")));        
+        assertFalse(fs.exists(new Path(sinkPath, "_temporary2")));
     }
 
     public void testWriteToExistingPail() throws Exception {
@@ -111,7 +111,7 @@ public class PailTapTest extends FSTestCase {
         try {
             identityFlow(new PailTap(sourcePath), new PailTap(sinkPath), new Fields("bytes"));
             fail("should fail!");
-        } catch(FlowException e) {
+        } catch (FlowException e) {
             assertTrue(e.getCause() instanceof IllegalArgumentException);
         }
     }

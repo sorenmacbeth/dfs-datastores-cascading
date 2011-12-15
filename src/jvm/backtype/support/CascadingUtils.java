@@ -19,8 +19,8 @@ public class CascadingUtils {
     }
 
     public static boolean isSinkOf(Tap tap, Flow flow) {
-        for(Entry<String, Tap> e: flow.getSinks().entrySet()) {
-            if(e.getValue()==tap) return true;
+        for (Entry<String, Tap> e : flow.getSinks().entrySet()) {
+            if (e.getValue() == tap) { return true; }
         }
         return false;
     }

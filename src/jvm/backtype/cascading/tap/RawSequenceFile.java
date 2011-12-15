@@ -13,32 +13,27 @@ import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import java.io.IOException;
 
 
-public class RawSequenceFile extends Scheme
-  {
-  public RawSequenceFile(String keyField, String valueField)
-    {
-    super(new Fields(keyField, valueField));
+public class RawSequenceFile extends Scheme {
+    public RawSequenceFile(String keyField, String valueField) {
+        super(new Fields(keyField, valueField));
     }
 
-  @Override
-  public void sourceInit( Tap tap, JobConf conf )
-    {
-    conf.setInputFormat( SequenceFileInputFormat.class );
+    @Override
+    public void sourceInit(Tap tap, JobConf conf) {
+        conf.setInputFormat(SequenceFileInputFormat.class);
     }
 
-  @Override
-  public void sinkInit( Tap tap, JobConf conf )
-    {
+    @Override
+    public void sinkInit(Tap tap, JobConf conf) {
         throw new TapException("cannot use as a sink");
     }
 
-  @Override
-  public Tuple source( Object key, Object value )
-    {
-      Tuple ret = new Tuple();
-      ret.add((Comparable) key);
-      ret.add((Comparable)value);
-      return ret;
+    @Override
+    public Tuple source(Object key, Object value) {
+        Tuple ret = new Tuple();
+        ret.add((Comparable) key);
+        ret.add((Comparable) value);
+        return ret;
     }
 
     @Override
@@ -46,4 +41,4 @@ public class RawSequenceFile extends Scheme
         throw new TapException("cannot use as a sink");
     }
 
-  }
+}

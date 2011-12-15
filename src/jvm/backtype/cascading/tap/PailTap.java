@@ -33,7 +33,7 @@ public class PailTap extends Hfs implements FlowListener {
     private static Logger LOG = Logger.getLogger(PailTap.class);
 
     public static PailSpec makeSpec(PailSpec given, PailStructure structure) {
-        if(given==null) {
+        if (given == null) {
             return PailFormatFactory.getDefaultCopy().setStructure(structure);
         } else {
             return given.setStructure(structure);
@@ -47,10 +47,11 @@ public class PailTap extends Hfs implements FlowListener {
         public PailPathLister lister = null;
 
         public PailTapOptions() {
-            
+
         }
 
-        public PailTapOptions(PailSpec spec, String fieldName, List<String>[] attrs, PailPathLister lister) {
+        public PailTapOptions(PailSpec spec, String fieldName, List<String>[] attrs,
+            PailPathLister lister) {
             this.spec = spec;
             this.fieldName = fieldName;
             this.attrs = attrs;
@@ -100,13 +101,13 @@ public class PailTap extends Hfs implements FlowListener {
             Comparable obj = tuple.get(0);
             String key;
             //a hack since byte[] isn't natively handled by hadoop
-            if(getStructure() instanceof DefaultPailStructure) {
+            if (getStructure() instanceof DefaultPailStructure) {
                 key = getCategory(obj);
             } else {
                 key = Utils.join(getStructure().getTarget(obj), "/") + getCategory(obj);
             }
-            if(bw==null) bw = new BytesWritable();
-            if(keyW==null) keyW = new Text();
+            if (bw == null) { bw = new BytesWritable(); }
+            if (keyW == null) { keyW = new Text(); }
             serialize(obj, bw);
             keyW.set(key);
             output.collect(keyW, bw);
@@ -115,7 +116,7 @@ public class PailTap extends Hfs implements FlowListener {
 
         protected Comparable deserialize(BytesWritable record) {
             PailStructure structure = getStructure();
-            if(structure instanceof BinaryPailStructure) {
+            if (structure instanceof BinaryPailStructure) {
                 return record;
             } else {
                 return (Comparable) structure.deserialize(Utils.getBytes(record));
@@ -123,7 +124,7 @@ public class PailTap extends Hfs implements FlowListener {
         }
 
         protected void serialize(Comparable obj, BytesWritable ret) {
-            if(obj instanceof BytesWritable) {
+            if (obj instanceof BytesWritable) {
                 ret.set((BytesWritable) obj);
             } else {
                 byte[] b = getStructure().serialize(obj);
@@ -134,8 +135,8 @@ public class PailTap extends Hfs implements FlowListener {
         private transient PailStructure _structure;
 
         public PailStructure getStructure() {
-            if(_structure==null) {
-                if(getSpec()==null) {
+            if (_structure == null) {
+                if (getSpec() == null) {
                     _structure = PailFormatFactory.getDefaultCopy().getStructure();
                 } else {
                     _structure = getSpec().getStructure();
@@ -173,9 +174,9 @@ public class PailTap extends Hfs implements FlowListener {
     @Override
     public void sourceInit(JobConf conf) throws IOException {
         Path root = getQualifiedPath(conf);
-        if(_options.attrs!=null && _options.attrs.length>0) {
+        if (_options.attrs != null && _options.attrs.length > 0) {
             Pail pail = new Pail(_pailRoot);
-            for(List<String> attr: _options.attrs) {
+            for (List<String> attr : _options.attrs) {
                 String rel = Utils.join(attr, "/");
                 pail.getSubPail(rel); //ensure the path exists
                 Path toAdd = new Path(root, rel);
@@ -187,23 +188,22 @@ public class PailTap extends Hfs implements FlowListener {
         }
 
         getScheme().sourceInit(this, conf);
-        makeLocal( conf, getQualifiedPath(conf), "forcing job to local mode, via source: " );
-        TupleSerialization.setSerializations( conf );
+        makeLocal(conf, getQualifiedPath(conf), "forcing job to local mode, via source: ");
+        TupleSerialization.setSerializations(conf);
     }
 
     private void makeLocal(JobConf conf, Path qualifiedPath, String infoMessage) {
-      if( !conf.get( "mapred.job.tracker", "" ).equalsIgnoreCase( "local" ) && qualifiedPath.toUri().getScheme().equalsIgnoreCase( "file" ) )
-      {
-      if( LOG.isInfoEnabled() )
-        LOG.info( infoMessage + toString() );
+        if (!conf.get("mapred.job.tracker", "").equalsIgnoreCase("local") && qualifiedPath.toUri()
+            .getScheme().equalsIgnoreCase("file")) {
+            if (LOG.isInfoEnabled()) { LOG.info(infoMessage + toString()); }
 
-      conf.set( "mapred.job.tracker", "local" ); // force job to run locally
-      }
+            conf.set("mapred.job.tracker", "local"); // force job to run locally
+        }
     }
 
     @Override
     public void sinkInit(JobConf conf) throws IOException {
-        if(_options.attrs!=null && _options.attrs.length>0) {
+        if (_options.attrs != null && _options.attrs.length > 0) {
             throw new TapException("can't declare attributes in a sink");
         }
         super.sinkInit(conf);
@@ -212,28 +212,29 @@ public class PailTap extends Hfs implements FlowListener {
     public void onCompleted(Flow flow) {
         try {
             //only if it's a sink
-            if(flow.getFlowStats().isSuccessful() && CascadingUtils.isSinkOf(this, flow)) {
-                Pail p = Pail.create(_pailRoot, ((PailScheme)getScheme()).getSpec(), false);
+            if (flow.getFlowStats().isSuccessful() && CascadingUtils.isSinkOf(this, flow)) {
+                Pail p = Pail.create(_pailRoot, ((PailScheme) getScheme()).getSpec(), false);
                 FileSystem fs = p.getFileSystem();
                 Path tmpPath = new Path(_pailRoot, "_temporary");
-                if(fs.exists(tmpPath)) {
-                    LOG.info("Deleting _temporary directory left by Hadoop job: " + tmpPath.toString());
+                if (fs.exists(tmpPath)) {
+                    LOG.info(
+                        "Deleting _temporary directory left by Hadoop job: " + tmpPath.toString());
                     fs.delete(tmpPath, true);
                 }
 
                 Path tmp2Path = new Path(_pailRoot, "_temporary2");
-                if(fs.exists(tmp2Path)) {
+                if (fs.exists(tmp2Path)) {
                     LOG.info("Deleting _temporary2 directory: " + tmp2Path.toString());
                     fs.delete(tmp2Path, true);
                 }
 
                 Path logPath = new Path(_pailRoot, "_logs");
-                if(fs.exists(logPath)) {
+                if (fs.exists(logPath)) {
                     LOG.info("Deleting _logs directory left by Hadoop job: " + logPath.toString());
                     fs.delete(logPath, true);
                 }
             }
-        } catch(IOException e) {
+        } catch (IOException e) {
             throw new TapException(e);
         }
     }
@@ -253,24 +254,24 @@ public class PailTap extends Hfs implements FlowListener {
 
     @Override
     public boolean equals(Object object) {
-        if(!getClass().equals(object.getClass())) {
+        if (!getClass().equals(object.getClass())) {
             return false;
         }
         PailTap other = (PailTap) object;
         Set<List<String>> myattrs = new HashSet<List<String>>();
-        if(_options.attrs!=null) {
-            for(List<String> a: _options.attrs) {
+        if (_options.attrs != null) {
+            for (List<String> a : _options.attrs) {
                 myattrs.add(a);
             }
         }
         Set<List<String>> otherattrs = new HashSet<List<String>>();
-        if(other._options.attrs!=null) {
-            for(List<String> a: other._options.attrs) {
+        if (other._options.attrs != null) {
+            for (List<String> a : other._options.attrs) {
                 otherattrs.add(a);
             }
         }
         return _pailRoot.equals(other._pailRoot) && myattrs.equals(otherattrs);
     }
 
-    
+
 }

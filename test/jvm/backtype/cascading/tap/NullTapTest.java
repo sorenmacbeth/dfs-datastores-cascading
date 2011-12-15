@@ -13,7 +13,7 @@ import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntryCollector;
 import org.apache.hadoop.mapred.JobConf;
 
-import static backtype.support.TestUtils.*;
+import static backtype.support.TestUtils.getTmpPath;
 
 
 public class NullTapTest extends FSTestCase {
