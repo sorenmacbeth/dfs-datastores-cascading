@@ -2,7 +2,7 @@
 
 This project provides taps for using the [dfs-datastores](https://github.com/nathanmarz/dfs-datastores) library with Cascading 1.2.4 and 2.0.
 
-Dfs-Datastores-Cascading supports both Cascading 1.2 and Cascading 2.0.
+Dfs-datastores-cascading supports both Cascading 1.2 and Cascading 2.0.
 
 For Cascading 1.2 support, use
 
