@@ -72,7 +72,7 @@ public class PailTap extends Hfs implements FlowListener {
 
 
     public class PailScheme
-        extends Scheme<HadoopFlowProcess, JobConf, RecordReader, OutputCollector, Object[], Void> {
+        extends Scheme<HadoopFlowProcess, JobConf, RecordReader, OutputCollector, Object[], Object[]> {
         private PailTapOptions _options;
         private transient PailStructure _structure;
 
@@ -170,7 +170,7 @@ public class PailTap extends Hfs implements FlowListener {
         }
 
         @Override public void sink(HadoopFlowProcess hadoopFlowProcess,
-            SinkCall<Void, OutputCollector> sinkCall) throws IOException {
+            SinkCall<Object[], OutputCollector> sinkCall) throws IOException {
 
             Comparable obj = sinkCall.getOutgoingEntry().getTuple().get(0);
             String key;
