@@ -1,49 +1,45 @@
 package backtype.cascading.tap;
 
+import cascading.flow.FlowProcess;
+import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.scheme.Scheme;
+import cascading.scheme.SinkCall;
+import cascading.scheme.SourceCall;
 import cascading.tap.Tap;
 import cascading.tuple.*;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.lib.NullOutputFormat;
 
 import java.io.IOException;
+import org.apache.hadoop.mapred.RecordReader;
 
 
 public class NullTap extends Tap  {
-
-    public static class NullScheme extends Scheme {
-
+    
+    public static class NullScheme extends Scheme<HadoopFlowProcess, JobConf, RecordReader, OutputCollector, Object[], Object[]> {
         public NullScheme() {
             super(Fields.ALL);
         }
 
         @Override
-        public void sourceInit(Tap tap, JobConf conf) throws IOException {
+        public void sourceConfInit(HadoopFlowProcess prcs, Tap tap, JobConf config) {
             throw new IllegalArgumentException("Cannot use as a source");
         }
 
         @Override
-        public void sinkInit(Tap tap, JobConf conf) throws IOException {
+        public void sinkConfInit(HadoopFlowProcess prcs, Tap tap, JobConf conf) {
             conf.setOutputFormat(NullOutputFormat.class);
         }
 
         @Override
-        public Tuple source(Object k, Object v) {
+        public boolean source(HadoopFlowProcess prcs, SourceCall<Object[], RecordReader> sc) throws IOException {
             throw new IllegalArgumentException("cannot source");
         }
 
         @Override
-        public void sink(TupleEntry tuple, OutputCollector output) throws IOException {
-            output.collect(NullWritable.get(), NullWritable.get());
+        public void sink(HadoopFlowProcess prcs, SinkCall<Object[], OutputCollector> sourceCall) throws IOException {
         }
-
-    }
-
-    protected String getCategory(Comparable obj) {
-        return "";
     }
 
     public NullTap() {
@@ -51,37 +47,32 @@ public class NullTap extends Tap  {
     }
 
     @Override
-    public boolean deletePath(JobConf conf) throws IOException {
-       return true;
+    public String getIdentifier() {
+        return "NULLTAP";
     }
 
     @Override
-    public Path getPath() {
-        return new Path("/dev/null");
-    }
-
-    @Override
-    public TupleEntryIterator openForRead(JobConf jc) throws IOException {
+    public TupleEntryIterator openForRead(FlowProcess prcs, Object input) throws IOException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public TupleEntryCollector openForWrite(JobConf jc) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public boolean makeDirs(JobConf jc) throws IOException {
+    public boolean createResource(Object config) throws IOException {
         return true;
     }
 
     @Override
-    public boolean pathExists(JobConf jc) throws IOException {
-        return false;
+    public boolean deleteResource(Object config) throws IOException {
+        return true;
     }
 
     @Override
-    public long getPathModified(JobConf jc) throws IOException {
+    public boolean resourceExists(Object config) throws IOException {
+        return false;
+    }    
+    
+    @Override
+    public long getModifiedTime(Object config) throws IOException {
         return System.currentTimeMillis();
     }
 
@@ -89,6 +80,4 @@ public class NullTap extends Tap  {
     public boolean equals(Object object) {
         return this==object;
     }
-
-
 }
