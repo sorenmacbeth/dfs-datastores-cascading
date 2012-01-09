@@ -15,52 +15,46 @@ import org.apache.hadoop.mapred.SequenceFileInputFormat;
 
 import java.io.IOException;
 
-
-public class RawSequenceFile
-    extends Scheme<HadoopFlowProcess, JobConf, RecordReader, OutputCollector, Object[], Void> {
+public class RawSequenceFile extends Scheme<HadoopFlowProcess, JobConf, RecordReader, OutputCollector, Object[], Object[]> {
     public RawSequenceFile(String keyField, String valueField) {
         super(new Fields(keyField, valueField));
     }
 
-    @Override
-    public void sourceConfInit(HadoopFlowProcess hadoopFlowProcess, Tap tap, JobConf entries) {
-        entries.setInputFormat(SequenceFileInputFormat.class);
+    public void sourceConfInit(HadoopFlowProcess process, Tap tap, JobConf conf) {
+        conf.setInputFormat(SequenceFileInputFormat.class);
     }
 
     @Override
-    public void sinkConfInit(HadoopFlowProcess hadoopFlowProcess, Tap tap, JobConf entries) {
-        throw new TapException("cannot use as a sink.");
+    public void sinkConfInit(HadoopFlowProcess prcs, Tap tap, JobConf conf) {
+        throw new TapException("cannot use as a sink");
     }
 
     @Override
-    public void sourcePrepare(HadoopFlowProcess flowProcess,
-        SourceCall<Object[], RecordReader> sourceCall) {
+    public void sourcePrepare(HadoopFlowProcess flowProcess, SourceCall<Object[], RecordReader> sourceCall) {
         sourceCall.setContext(new Object[2]);
 
         sourceCall.getContext()[0] = sourceCall.getInput().createKey();
         sourceCall.getContext()[1] = sourceCall.getInput().createValue();
-    }
+    }    
+    
+    @Override
+    public boolean source(HadoopFlowProcess prcs, SourceCall<Object[], RecordReader> sourceCall) throws IOException {
 
-    @Override public boolean source(HadoopFlowProcess hadoopFlowProcess,
-        SourceCall<Object[], RecordReader> sourceCall) throws IOException {
-
-        Comparable key = (Comparable) sourceCall.getContext()[0];
-        Comparable value = (Comparable) sourceCall.getContext()[1];
+        Object key = sourceCall.getContext()[0];
+        Object value = sourceCall.getContext()[1];
 
         boolean result = sourceCall.getInput().next(key, value);
 
-        if (!result) { return false; }
+        if (!result) {
+            return false;
+        }
 
-        Tuple ret = new Tuple();
-        ret.add(key);
-        ret.add(value);
-
-        sourceCall.getIncomingEntry().setTuple(ret);
+        sourceCall.getIncomingEntry().setTuple(new Tuple(key, value));
         return true;
     }
 
-    @Override public void sink(HadoopFlowProcess hadoopFlowProcess,
-        SinkCall<Void, OutputCollector> voidOutputCollectorSinkCall) throws IOException {
-        throw new UnsupportedOperationException("Not supported.");
+    @Override
+    public void sink(HadoopFlowProcess prcs, SinkCall<Object[], OutputCollector> sc) throws IOException {
+        throw new TapException("cannot use as a sink");
     }
 }

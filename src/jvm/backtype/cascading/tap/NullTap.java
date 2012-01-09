@@ -9,7 +9,6 @@ import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.TupleEntryCollector;
 import cascading.tuple.TupleEntryIterator;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
@@ -17,46 +16,35 @@ import org.apache.hadoop.mapred.lib.NullOutputFormat;
 
 import java.io.IOException;
 
-
-public class NullTap extends Tap {
-
-    public static class NullScheme extends
-        Scheme<HadoopFlowProcess, JobConf, RecordReader, OutputCollector<NullWritable, NullWritable>, Object[], Void> {
-
+public class NullTap extends Tap  {
+    
+    public static class NullScheme extends Scheme<HadoopFlowProcess, JobConf, RecordReader, OutputCollector, Object[], Object[]> {
         public NullScheme() {
             super(Fields.ALL);
         }
 
         @Override
-        public void sourceConfInit(HadoopFlowProcess hadoopFlowProcess, Tap tap, JobConf entries) {
+        public void sourceConfInit(HadoopFlowProcess prcs, Tap tap, JobConf config) {
             throw new IllegalArgumentException("Cannot use as a source");
         }
 
         @Override
-        public void sinkConfInit(HadoopFlowProcess hadoopFlowProcess, Tap tap, JobConf entries) {
-            entries.setOutputFormat(NullOutputFormat.class);
+        public void sinkConfInit(HadoopFlowProcess prcs, Tap tap, JobConf conf) {
+            conf.setOutputFormat(NullOutputFormat.class);
         }
 
-        @Override public boolean source(HadoopFlowProcess hadoopFlowProcess,
-            SourceCall<Object[], RecordReader> recordReaderSourceCall) throws IOException {
-            throw new IllegalArgumentException("Can't source.");
+        @Override
+        public boolean source(HadoopFlowProcess prcs, SourceCall<Object[], RecordReader> sc) throws IOException {
+            throw new IllegalArgumentException("cannot source");
         }
 
-        @Override public void sink(HadoopFlowProcess hadoopFlowProcess,
-            SinkCall<Void, OutputCollector<NullWritable, NullWritable>> voidOutputCollectorSinkCall)
-            throws IOException {
-            voidOutputCollectorSinkCall.getOutput().collect(NullWritable.get(), NullWritable.get());
+        @Override
+        public void sink(HadoopFlowProcess prcs, SinkCall<Object[], OutputCollector> sourceCall) throws IOException {
         }
-
     }
 
     public NullTap() {
         super(new NullScheme());
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        return object.getClass() == this.getClass() && this == object;
     }
 
     @Override public String getIdentifier() {
@@ -85,7 +73,12 @@ public class NullTap extends Tap {
         return false;
     }
 
-    @Override public long getModifiedTime(Object o) throws IOException {
+    @Override public long getModifiedTime(Object config) throws IOException {
         return System.currentTimeMillis();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        return object.getClass() == this.getClass() && this == object;
     }
 }

@@ -1,5 +1,6 @@
 package backtype.cascading.tap;
 
+import cascading.flow.hadoop.HadoopFlowConnector;
 import backtype.cascading.tap.PailTap.PailTapOptions;
 import backtype.hadoop.pail.Pail;
 import backtype.support.FSTestCase;
