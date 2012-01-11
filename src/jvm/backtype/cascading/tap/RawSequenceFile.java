@@ -35,8 +35,8 @@ public class RawSequenceFile extends Scheme<HadoopFlowProcess, JobConf, RecordRe
 
         sourceCall.getContext()[0] = sourceCall.getInput().createKey();
         sourceCall.getContext()[1] = sourceCall.getInput().createValue();
-    }    
-    
+    }
+
     @Override
     public boolean source(HadoopFlowProcess prcs, SourceCall<Object[], RecordReader> sourceCall) throws IOException {
 

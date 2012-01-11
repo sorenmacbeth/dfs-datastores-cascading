@@ -17,7 +17,7 @@ import org.apache.hadoop.mapred.lib.NullOutputFormat;
 import java.io.IOException;
 
 public class NullTap extends Tap  {
-    
+
     public static class NullScheme extends Scheme<HadoopFlowProcess, JobConf, RecordReader, OutputCollector, Object[], Object[]> {
         public NullScheme() {
             super(Fields.ALL);

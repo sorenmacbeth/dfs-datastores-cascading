@@ -1,5 +1,6 @@
 (defproject backtype/dfs-datastores-cascading "1.1.0"
   :java-source-path "src/jvm"
+  :source-path "src/clj"
   :java-test-path "test/jvm"
   :javac-options {:debug "true" :fork "true"}
   :repositories {"conjars" "http://conjars.org/repo"}
