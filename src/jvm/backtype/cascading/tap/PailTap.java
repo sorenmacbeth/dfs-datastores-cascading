@@ -155,7 +155,7 @@ public class PailTap extends Hfs implements FlowListener {
         public void sink(HadoopFlowProcess process, SinkCall<Object[], OutputCollector> sinkCall) throws IOException {
             TupleEntry tuple = sinkCall.getOutgoingEntry();
 
-            Object obj = tuple.get(0);
+            Object obj = tuple.getObject(0);
             String key;
             //a hack since byte[] isn't natively handled by hadoop
             if(getStructure() instanceof DefaultPailStructure) {
