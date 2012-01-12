@@ -9,12 +9,10 @@ import cascading.tap.Tap;
 import cascading.tuple.Fields;
 
 
-
 public class CascadingUtils {
     public static void identityFlow(Tap source, Tap sink, Fields selectFields) {
         Pipe pipe = new Pipe("pipe");
         pipe = new Each(pipe, selectFields, new Identity());
-        
         Flow flow = new HadoopFlowConnector().connect(source, sink, pipe);
         flow.complete();
     }

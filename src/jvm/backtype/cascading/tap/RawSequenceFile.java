@@ -8,21 +8,18 @@ import cascading.tap.Tap;
 import cascading.tap.TapException;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
-import cascading.tuple.TupleEntry;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.SequenceFileInputFormat;
 
 import java.io.IOException;
-import org.apache.hadoop.mapred.OutputCollector;
-import org.apache.hadoop.mapred.RecordReader;
 
 public class RawSequenceFile extends Scheme<HadoopFlowProcess, JobConf, RecordReader, OutputCollector, Object[], Object[]> {
-
     public RawSequenceFile(String keyField, String valueField) {
         super(new Fields(keyField, valueField));
     }
 
-    @Override
     public void sourceConfInit(HadoopFlowProcess process, Tap tap, JobConf conf) {
         conf.setInputFormat(SequenceFileInputFormat.class);
     }
@@ -38,8 +35,8 @@ public class RawSequenceFile extends Scheme<HadoopFlowProcess, JobConf, RecordRe
 
         sourceCall.getContext()[0] = sourceCall.getInput().createKey();
         sourceCall.getContext()[1] = sourceCall.getInput().createValue();
-    }    
-    
+    }
+
     @Override
     public boolean source(HadoopFlowProcess prcs, SourceCall<Object[], RecordReader> sourceCall) throws IOException {
 

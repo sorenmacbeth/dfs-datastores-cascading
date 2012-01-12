@@ -23,6 +23,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.RecordReader;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -30,8 +31,6 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.apache.hadoop.mapred.RecordReader;
-
 
 public class PailTap extends Hfs implements FlowListener {
     private static Logger LOG = Logger.getLogger(PailTap.class);
@@ -51,7 +50,7 @@ public class PailTap extends Hfs implements FlowListener {
         public PailPathLister lister = null;
 
         public PailTapOptions() {
-            
+
         }
 
         public PailTapOptions(PailSpec spec, String fieldName, List<String>[] attrs, PailPathLister lister) {
@@ -78,16 +77,16 @@ public class PailTap extends Hfs implements FlowListener {
         private transient BytesWritable bw;
         private transient Text keyW;
 
-        protected Comparable deserialize(BytesWritable record) {
+        protected Object deserialize(BytesWritable record) {
             PailStructure structure = getStructure();
             if(structure instanceof BinaryPailStructure) {
                 return record;
             } else {
-                return (Comparable) structure.deserialize(Utils.getBytes(record));
+                return structure.deserialize(Utils.getBytes(record));
             }
         }
 
-        protected void serialize(Comparable obj, BytesWritable ret) {
+        protected void serialize(Object obj, BytesWritable ret) {
             if(obj instanceof BytesWritable) {
                 ret.set((BytesWritable) obj);
             } else {
@@ -111,7 +110,7 @@ public class PailTap extends Hfs implements FlowListener {
 
         @Override
         public void sourceConfInit(HadoopFlowProcess process, Tap tap, JobConf conf) {
-            Pail p; 
+            Pail p;
             try {
                 p = new Pail(_pailRoot); //make sure it exists
             } catch (IOException e) {
@@ -131,7 +130,7 @@ public class PailTap extends Hfs implements FlowListener {
                 throw new TapException(e);
             }
         }
-        
+
         @Override
         public void sourcePrepare(HadoopFlowProcess flowProcess, SourceCall<Object[], RecordReader> sourceCall) {
             sourceCall.setContext(new Object[2]);
@@ -139,7 +138,7 @@ public class PailTap extends Hfs implements FlowListener {
             sourceCall.getContext()[0] = sourceCall.getInput().createKey();
             sourceCall.getContext()[1] = sourceCall.getInput().createValue();
         }
-    
+
         @Override
         public boolean source(HadoopFlowProcess process, SourceCall<Object[], RecordReader> sourceCall) throws IOException {
             Object k = sourceCall.getContext()[0];
@@ -147,7 +146,7 @@ public class PailTap extends Hfs implements FlowListener {
             boolean result = sourceCall.getInput().next(k, v);
             if(!result) return false;
             String relPath = ((Text) k).toString();
-            Comparable value = deserialize((BytesWritable) v);
+            Object value = deserialize((BytesWritable) v);
             sourceCall.getIncomingEntry().setTuple(new Tuple(relPath, value));
             return true;
         }
@@ -155,8 +154,8 @@ public class PailTap extends Hfs implements FlowListener {
         @Override
         public void sink(HadoopFlowProcess process, SinkCall<Object[], OutputCollector> sinkCall) throws IOException {
             TupleEntry tuple = sinkCall.getOutgoingEntry();
-                    
-            Comparable obj = tuple.get(0);
+
+            Object obj = tuple.getObject(0);
             String key;
             //a hack since byte[] isn't natively handled by hadoop
             if(getStructure() instanceof DefaultPailStructure) {
@@ -168,7 +167,7 @@ public class PailTap extends Hfs implements FlowListener {
             if(keyW==null) keyW = new Text();
             serialize(obj, bw);
             keyW.set(key);
-            sinkCall.getOutput().collect(keyW, bw);            
+            sinkCall.getOutput().collect(keyW, bw);
         }
 
     }
@@ -176,7 +175,7 @@ public class PailTap extends Hfs implements FlowListener {
     private String _pailRoot;
     private PailTapOptions _options;
 
-    protected String getCategory(Comparable obj) {
+    protected String getCategory(Object obj) {
         return "";
     }
 
@@ -196,7 +195,7 @@ public class PailTap extends Hfs implements FlowListener {
         throw new UnsupportedOperationException();
     }
 
-    
+
     //no good way to override this, just had to copy/paste and modify
     @Override
     public void sourceConfInit(HadoopFlowProcess process, JobConf conf) {
@@ -224,13 +223,13 @@ public class PailTap extends Hfs implements FlowListener {
     }
 
     private void makeLocal(JobConf conf, Path qualifiedPath, String infoMessage) {
-      if( !conf.get( "mapred.job.tracker", "" ).equalsIgnoreCase( "local" ) && qualifiedPath.toUri().getScheme().equalsIgnoreCase( "file" ) )
-      {
-      if( LOG.isInfoEnabled() )
-        LOG.info( infoMessage + toString() );
+        if( !conf.get( "mapred.job.tracker", "" ).equalsIgnoreCase( "local" ) && qualifiedPath.toUri().getScheme().equalsIgnoreCase( "file" ) )
+        {
+            if( LOG.isInfoEnabled() )
+                LOG.info( infoMessage + toString() );
 
-      conf.set( "mapred.job.tracker", "local" ); // force job to run locally
-      }
+            conf.set( "mapred.job.tracker", "local" ); // force job to run locally
+        }
     }
 
     @Override
@@ -304,7 +303,7 @@ public class PailTap extends Hfs implements FlowListener {
         return _pailRoot.equals(other._pailRoot) && myattrs.equals(otherattrs);
     }
 
-   private Path getQualifiedPath(JobConf conf) throws IOException {
-       return getPath().makeQualified(getFileSystem(conf));
-   }    
+    private Path getQualifiedPath(JobConf conf) throws IOException {
+        return getPath().makeQualified(getFileSystem(conf));
+    }
 }
