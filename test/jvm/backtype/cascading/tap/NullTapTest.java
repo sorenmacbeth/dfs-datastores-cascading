@@ -16,7 +16,6 @@ import org.apache.hadoop.mapred.JobConf;
 
 import static backtype.support.TestUtils.getTmpPath;
 
-
 public class NullTapTest extends FSTestCase {
 
     public void testNullTap() throws Exception {
@@ -33,7 +32,6 @@ public class NullTapTest extends FSTestCase {
 
         //just make sure there's not exception
         new HadoopFlowConnector().connect(source, new NullTap(), p).complete();
-
     }
 
 }
