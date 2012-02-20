@@ -56,11 +56,6 @@ public class NullTap extends Tap  {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    @Override public TupleEntryCollector openForWrite(FlowProcess flowProcess, Object o)
-        throws IOException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
     @Override public boolean createResource(Object o) throws IOException {
         return true;
     }
