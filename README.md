@@ -12,8 +12,4 @@ For Cascading 1.2 support, use
 
 For Cascading 2.0, use
 
-    [backtype/dfs-datastores-cascading "1.1.0"]
-
-
-
-
+    [backtype/dfs-datastores-cascading "1.1.3"]
