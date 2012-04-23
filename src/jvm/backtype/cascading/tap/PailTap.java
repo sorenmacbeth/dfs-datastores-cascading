@@ -5,6 +5,7 @@ import backtype.support.CascadingUtils;
 import backtype.support.Utils;
 import cascading.flow.Flow;
 import cascading.flow.FlowListener;
+import cascading.flow.FlowProcess;
 import cascading.flow.hadoop.HadoopFlowProcess;
 import cascading.scheme.Scheme;
 import cascading.scheme.SinkCall;
@@ -198,7 +199,7 @@ public class PailTap extends Hfs implements FlowListener {
 
     //no good way to override this, just had to copy/paste and modify
     @Override
-    public void sourceConfInit(HadoopFlowProcess process, JobConf conf) {
+    public void sourceConfInit(FlowProcess<JobConf> process, JobConf conf) {
         try {
             Path root = getQualifiedPath(conf);
             if(_options.attrs!=null && _options.attrs.length>0) {
@@ -233,7 +234,7 @@ public class PailTap extends Hfs implements FlowListener {
     }
 
     @Override
-    public void sinkConfInit(HadoopFlowProcess process, JobConf conf) {
+    public void sinkConfInit(FlowProcess<JobConf> process, JobConf conf) {
         if(_options.attrs!=null && _options.attrs.length>0) {
             throw new TapException("can't declare attributes in a sink");
         }
